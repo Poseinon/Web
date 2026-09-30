@@ -1,0 +1,6 @@
+{
+  "name": "TECHZONE - Thế Giới Linh Kiện & PC Gaming",
+  "description": "Nền tảng thương mại điện tử chuyên cung cấp linh kiện máy tính, PC Gaming, phụ kiện công nghệ hàng đầu với công cụ PC Builder thông minh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

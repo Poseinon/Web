@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #0B0F14;
+    --card-bg: #111827;
+    --card-border: #1F2937;
+    --accent-cyan: #00E5FF;
+    --accent-purple: #7C3AED;
+    --text-primary: #F9FAFB;
+    --text-secondary: #9CA3AF;
+  }
+
+  .light {
+    --bg-main: #F3F4F6;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E7EB;
+    --accent-cyan: #0891B2;
+    --accent-purple: #6D28D9;
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0F14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1F2937;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.light .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.25);
+}
+
+.glow-purple {
+  box-shadow: 0 0 25px rgba(124, 58, 237, 0.25);
+}
+
