@@ -43,7 +43,7 @@ export const api = {
     return handleResponse<{ success: boolean; token: string; user: User; message: string }>(res);
   },
 
-  async register(data: { fullName: string; email: string; password: string; phone?: string }) {
+  async register(data: { fullName: string; email: string; password: string; phone?: string; role?: string }) {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: getHeaders(),
@@ -135,6 +135,15 @@ export const api = {
       headers: getHeaders()
     });
     return handleResponse<{ success: boolean; message: string }>(res);
+  },
+
+  async adjustProductStock(id: string, options: { stock?: number; delta?: number }) {
+    const res = await fetch(`${API_BASE}/products/${id}/stock`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(options)
+    });
+    return handleResponse<{ success: boolean; message: string; data: Product }>(res);
   },
 
   // Cart
@@ -267,5 +276,85 @@ export const api = {
       headers: getHeaders()
     });
     return handleResponse<{ success: boolean; data: User[] }>(res);
+  },
+
+  async updateUserRole(userId: string, role: string) {
+    const res = await fetch(`${API_BASE}/admin/users/${userId}/role`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ role })
+    });
+    return handleResponse<{ success: boolean; message: string; data: User }>(res);
+  },
+
+  async adminCreateUser(data: { fullName: string; email: string; password: string; phone?: string; role: string }) {
+    const res = await fetch(`${API_BASE}/admin/users`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse<{ success: boolean; message: string; data: User }>(res);
+  },
+
+  async adminDeleteUser(userId: string) {
+    const res = await fetch(`${API_BASE}/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    return handleResponse<{ success: boolean; message: string }>(res);
+  },
+
+  async getAdminShippers() {
+    const res = await fetch(`${API_BASE}/admin/shippers`, {
+      headers: getHeaders()
+    });
+    return handleResponse<{ success: boolean; data: any[] }>(res);
+  },
+
+  async assignShipperToOrder(orderId: string, shipperId: string) {
+    const res = await fetch(`${API_BASE}/admin/orders/${orderId}/assign-shipper`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ shipperId })
+    });
+    return handleResponse<{ success: boolean; message: string; data: Order }>(res);
+  },
+
+  // Shipper Portal
+  async getShipperOrders() {
+    const res = await fetch(`${API_BASE}/shipper/orders`, {
+      headers: getHeaders()
+    });
+    return handleResponse<{
+      success: boolean;
+      data: Order[];
+      activeOrder: Order | null;
+      isAvailable: boolean;
+    }>(res);
+  },
+
+  async claimShipperOrder(orderId: string) {
+    const res = await fetch(`${API_BASE}/shipper/orders/${orderId}/claim`, {
+      method: 'PUT',
+      headers: getHeaders()
+    });
+    return handleResponse<{ success: boolean; message: string; data: Order }>(res);
+  },
+
+  async updateShipperOrderStatus(orderId: string, status: string, deliveryNotes?: string) {
+    const res = await fetch(`${API_BASE}/shipper/orders/${orderId}/status`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ status, deliveryNotes })
+    });
+    return handleResponse<{ success: boolean; message: string; data: Order }>(res);
+  },
+
+  // Seller Portal
+  async getSellerDashboard() {
+    const res = await fetch(`${API_BASE}/seller/dashboard`, {
+      headers: getHeaders()
+    });
+    return handleResponse<{ success: boolean; data: any }>(res);
   }
 };

@@ -2,17 +2,17 @@ import bcrypt from 'bcryptjs';
 import { User, Category, Brand, Product, Coupon, Order, Review } from './types.ts';
 
 // Password hashes:
-// Admin@123 -> $2a$10$7Z2v...
-// User@123 -> $2a$10$w...
 const adminHash = bcrypt.hashSync('Admin@123', 10);
 const userHash = bcrypt.hashSync('User@123', 10);
+const sellerHash = bcrypt.hashSync('Seller@123', 10);
+const shipperHash = bcrypt.hashSync('Shipper@123', 10);
 
 export const initialUsers: User[] = [
   {
     id: 'user-admin-1',
     email: 'admin@techzone.vn',
     password: adminHash,
-    fullName: 'Quản Trị Viên TechZone',
+    fullName: 'Vũ Văn Hải (Quản Trị Viên)',
     phone: '0901234567',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     role: 'ADMIN',
@@ -20,10 +20,32 @@ export const initialUsers: User[] = [
     updatedAt: new Date().toISOString()
   },
   {
+    id: 'user-seller-1',
+    email: 'seller@techzone.vn',
+    password: sellerHash,
+    fullName: 'Nguyễn Văn Hùng (Quản Lý Bán Hàng & Kho)',
+    phone: '0912345678',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    role: 'ADMIN',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'user-shipper-1',
+    email: 'shipper@techzone.vn',
+    password: shipperHash,
+    fullName: 'Trần Văn Giao (Shipper Hỏa Tốc)',
+    phone: '0933889900',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    role: 'SHIPPER',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
     id: 'user-customer-1',
     email: 'user@techzone.vn',
     password: userHash,
-    fullName: 'Nguyễn Văn Minh',
+    fullName: 'Nguyễn Văn Minh (Khách Hàng)',
     phone: '0987654321',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     role: 'USER',

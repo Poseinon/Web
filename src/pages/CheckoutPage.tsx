@@ -15,6 +15,7 @@ import { useCart } from '../context/CartContext.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useToast } from '../context/ToastContext.tsx';
 import { api } from '../services/api.ts';
+import { SHOP_CONFIG } from '../config/shopConfig.ts';
 import confetti from 'canvas-confetti';
 
 interface CheckoutPageProps {
@@ -301,33 +302,44 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
               </label>
 
               {/* VietQR Bank Transfer */}
-              <label
+              <div
                 onClick={() => setPaymentMethod('BANK_TRANSFER')}
-                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   paymentMethod === 'BANK_TRANSFER'
                     ? 'bg-[#00E5FF]/10 border-[#00E5FF] text-white'
                     : 'bg-[#0B0F14] border-[#1F2937] text-gray-300 hover:bg-[#1F2937]/50'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#111827] flex items-center justify-center text-purple-400">
-                    <QrCode className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white">Chuyển khoản VietQR Siêu Tốc 24/7</div>
-                    <div className="text-[11px] text-gray-400">
-                      Quét mã QR tự động điền số tiền và mã đơn, xác nhận tức thì không chờ đợi
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#111827] flex items-center justify-center text-purple-400">
+                      <QrCode className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-2">
+                        Chuyển khoản VietQR Siêu Tốc 24/7
+                        <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded">Tự sinh mã QR</span>
+                      </div>
+                      <div className="text-[11px] text-gray-400">
+                        {SHOP_CONFIG.banking.bankName} • STK: {SHOP_CONFIG.banking.accountNumber} ({SHOP_CONFIG.banking.accountHolder})
+                      </div>
                     </div>
                   </div>
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      paymentMethod === 'BANK_TRANSFER' ? 'border-[#00E5FF]' : 'border-gray-600'
+                    }`}
+                  >
+                    {paymentMethod === 'BANK_TRANSFER' && <div className="w-2 h-2 rounded-full bg-[#00E5FF]" />}
+                  </div>
                 </div>
-                <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    paymentMethod === 'BANK_TRANSFER' ? 'border-[#00E5FF]' : 'border-gray-600'
-                  }`}
-                >
-                  {paymentMethod === 'BANK_TRANSFER' && <div className="w-2 h-2 rounded-full bg-[#00E5FF]" />}
-                </div>
-              </label>
+
+                {paymentMethod === 'BANK_TRANSFER' && (
+                  <div className="mt-3 pt-3 border-t border-[#1F2937] flex items-center justify-between text-[11px] text-purple-300">
+                    <span>💡 Mã QR kèm số tiền chính xác {total.toLocaleString('vi-VN')} ₫ sẽ hiển thị ngay sau khi bấm đặt hàng.</span>
+                  </div>
+                )}
+              </div>
 
               {/* Mock E-Wallet */}
               <label

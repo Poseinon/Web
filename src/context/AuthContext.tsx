@@ -8,9 +8,13 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isSeller: boolean;
+  isShipper: boolean;
+  isCustomer: boolean;
+  roleTitle: string;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (fullName: string, email: string, password: string, phone?: string) => Promise<boolean>;
+  register: (fullName: string, email: string, password: string, phone?: string, role?: string) => Promise<boolean>;
   logout: () => void;
   updateProfile: (data: { fullName: string; phone?: string; avatar?: string }) => Promise<boolean>;
 }
@@ -67,14 +71,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const register = async (fullName: string, email: string, password: string, phone?: string): Promise<boolean> => {
+  const register = async (fullName: string, email: string, password: string, phone?: string, role?: string): Promise<boolean> => {
     try {
-      const res = await api.register({ fullName, email, password, phone });
+      const res = await api.register({ fullName, email, password, phone, role });
       if (res.success && res.token) {
         localStorage.setItem('techzone_token', res.token);
         setToken(res.token);
         setUser(res.user);
-        success(`Tài khoản của bạn đã được tạo thành công!`, 'Đăng ký thành công');
+        success(`Tài khoản ${getRoleTitle(res.user.role)} đã được tạo thành công!`, 'Đăng ký thành công');
         return true;
       }
       return false;
@@ -106,6 +110,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const getRoleTitle = (r?: string) => {
+    switch (r) {
+      case 'ADMIN': return 'Quản Trị Viên & Quản Lý Kho';
+      case 'SELLER': return 'Quản Trị Viên & Quản Lý Kho';
+      case 'SHIPPER': return 'Nhân Viên Giao Hàng';
+      case 'USER':
+      default: return 'Khách Hàng';
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -113,6 +127,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         token,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'ADMIN',
+        isSeller: user?.role === 'ADMIN' || user?.role === 'SELLER',
+        isShipper: user?.role === 'SHIPPER',
+        isCustomer: user?.role === 'USER',
+        roleTitle: getRoleTitle(user?.role),
         loading,
         login,
         register,

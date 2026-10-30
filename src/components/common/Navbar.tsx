@@ -15,7 +15,9 @@ import {
   ShieldCheck,
   PackageCheck,
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  Store,
+  Truck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { useCart } from '../../context/CartContext.tsx';
@@ -32,7 +34,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigate, currentPage }) => {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isSeller, isShipper, roleTitle, logout } = useAuth();
   const { itemCount } = useCart();
   const { count: wishlistCount } = useWishlist();
   const { compareList } = useCompare();
@@ -350,23 +352,58 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigate, currentP
             )}
           </button>
 
+          {/* Quick Portal Shortcut Buttons based on Role */}
+          {isAuthenticated && isAdmin && (
+            <button
+              onClick={() => onNavigate('admin')}
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                currentPage === 'admin'
+                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                  : 'bg-[#111827] border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10'
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Quản Trị & Kho</span>
+            </button>
+          )}
+
+          {isAuthenticated && isShipper && (
+            <button
+              onClick={() => onNavigate('shipper')}
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                currentPage === 'shipper'
+                  ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                  : 'bg-[#111827] border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10'
+              }`}
+            >
+              <Truck className="w-4 h-4" />
+              <span>Giao Hàng</span>
+            </button>
+          )}
+
           {/* User Account / Auth Dropdown */}
           <div ref={userMenuRef} className="relative">
             {isAuthenticated && user ? (
               <div>
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#111827] border border-[#1F2937] hover:border-gray-600 transition-all text-left"
+                  className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#111827] border border-[#1F2937] hover:border-gray-600 transition-all text-left cursor-pointer"
                 >
                   <img
                     src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'}
                     alt={user.fullName}
                     className="w-7 h-7 rounded-lg object-cover border border-[#00E5FF]/40"
                   />
-                  <div className="hidden md:block max-w-[100px]">
+                  <div className="hidden md:block max-w-[120px]">
                     <div className="text-xs font-semibold text-white truncate">{user.fullName}</div>
-                    <div className="text-[10px] text-[#00E5FF] font-medium leading-none">
-                      {user.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên'}
+                    <div className={`text-[10px] font-bold leading-none ${
+                      user.role === 'ADMIN'
+                        ? 'text-cyan-400'
+                        : user.role === 'SHIPPER'
+                        ? 'text-emerald-400'
+                        : 'text-purple-400'
+                    }`}>
+                      {roleTitle}
                     </div>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 hidden sm:block" />
@@ -374,31 +411,58 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigate, currentP
 
                 {/* Dropdown Menu */}
                 {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-[#111827] border border-[#1F2937] rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 mt-2 w-60 bg-[#111827] border border-[#1F2937] rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-4 py-2.5 border-b border-[#1F2937]">
-                      <div className="text-xs text-gray-400">Đăng nhập bởi</div>
-                      <div className="text-sm font-semibold text-white truncate">{user.email}</div>
+                      <div className="text-xs text-gray-400">Đăng nhập với vai trò</div>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          user.role === 'ADMIN'
+                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                            : user.role === 'SHIPPER'
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                        }`}>
+                          {roleTitle}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-400 font-mono mt-1 truncate">{user.email}</div>
                     </div>
 
+                    {/* Role specific links */}
                     {isAdmin && (
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
                           onNavigate('admin');
                         }}
-                        className="w-full px-4 py-2 text-left text-xs font-semibold text-[#00E5FF] hover:bg-[#1F2937] flex items-center gap-2"
+                        className="w-full px-4 py-2 text-left text-xs font-semibold text-[#00E5FF] hover:bg-[#1F2937] flex items-center gap-2 cursor-pointer"
                       >
                         <LayoutDashboard className="w-4 h-4 text-[#00E5FF]" />
-                        Trang Quản Trị (Admin)
+                        Quản Trị & Kho Hàng (Admin)
                       </button>
                     )}
+
+                    {(isShipper || isAdmin) && (
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onNavigate('shipper');
+                        }}
+                        className="w-full px-4 py-2 text-left text-xs font-semibold text-emerald-300 hover:bg-[#1F2937] flex items-center gap-2 cursor-pointer"
+                      >
+                        <Truck className="w-4 h-4 text-emerald-400" />
+                        Cổng Giao Hàng (Shipper)
+                      </button>
+                    )}
+
+                    <div className="border-t border-[#1F2937] my-1" />
 
                     <button
                       onClick={() => {
                         setUserDropdownOpen(false);
                         onNavigate('profile', { tab: 'profile' });
                       }}
-                      className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-[#1F2937] flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-[#1F2937] flex items-center gap-2 cursor-pointer"
                     >
                       <UserIcon className="w-4 h-4 text-gray-400" />
                       Hồ sơ cá nhân
@@ -409,7 +473,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigate, currentP
                         setUserDropdownOpen(false);
                         onNavigate('profile', { tab: 'orders' });
                       }}
-                      className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-[#1F2937] flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-[#1F2937] flex items-center gap-2 cursor-pointer"
                     >
                       <PackageCheck className="w-4 h-4 text-gray-400" />
                       Lịch sử đơn hàng
@@ -420,7 +484,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigate, currentP
                         setUserDropdownOpen(false);
                         onNavigate('profile', { tab: 'wishlist' });
                       }}
-                      className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-[#1F2937] flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-[#1F2937] flex items-center gap-2 cursor-pointer"
                     >
                       <Heart className="w-4 h-4 text-pink-400" />
                       Sản phẩm yêu thích ({wishlistCount})

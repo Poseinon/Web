@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Cpu, Mail, Phone, MapPin, ShieldCheck, Truck, Headphones, RotateCcw, Send } from 'lucide-react';
 import { useToast } from '../../context/ToastContext.tsx';
+import { SHOP_CONFIG } from '../../config/shopConfig.ts';
 
 interface FooterProps {
   onNavigate: (page: string, params?: Record<string, any>) => void;
@@ -13,10 +14,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (email.trim()) {
-      success('Cảm ơn bạn đã đăng ký nhận bản tin khuyến mãi từ TECHZONE!', 'Đăng ký thành công');
+      success(`Cảm ơn bạn đã đăng ký nhận bản tin khuyến mãi từ ${SHOP_CONFIG.name}!`, 'Đăng ký thành công');
       setEmail('');
     }
   };
+
+  const primaryShowroom = SHOP_CONFIG.showrooms[0];
 
   return (
     <footer className="bg-[#070A0E] text-gray-400 border-t border-[#1F2937] pt-14 pb-8">
@@ -39,7 +42,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </div>
             <div>
               <div className="text-white font-semibold text-sm">100% Chính Hãng</div>
-              <div className="text-xs text-gray-400">Đầy đủ VAT, bảo hành 36 tháng chính hãng</div>
+              <div className="text-xs text-gray-400">Đầy đủ VAT, bảo hành {SHOP_CONFIG.warrantyMonths} tháng chính hãng</div>
             </div>
           </div>
 
@@ -48,7 +51,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <RotateCcw className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-white font-semibold text-sm">Đổi Mới 30 Ngày</div>
+              <div className="text-white font-semibold text-sm">Đổi Mới {SHOP_CONFIG.returnDays} Ngày</div>
               <div className="text-xs text-gray-400">Lỗi do nhà sản xuất đổi mới ngay lập tức</div>
             </div>
           </div>
@@ -82,20 +85,20 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </span>
             </div>
             <p className="text-xs text-gray-400 leading-relaxed max-w-sm">
-              TECHZONE là hệ thống bán lẻ linh kiện máy tính, PC Gaming và thiết bị công nghệ cao cấp hàng đầu Việt Nam. Tận tâm phục vụ game thủ, nhà sáng tạo nội dung và doanh nghiệp.
+              {SHOP_CONFIG.name} là hệ thống bán lẻ linh kiện máy tính, PC Gaming và thiết bị công nghệ cao cấp hàng đầu Việt Nam. Tận tâm phục vụ game thủ, nhà sáng tạo nội dung và doanh nghiệp.
             </p>
             <div className="space-y-2 text-xs">
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#00E5FF] shrink-0 mt-0.5" />
-                <span>Showroom 1: 123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh</span>
+                <span>Showroom: {primaryShowroom.address}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-[#00E5FF] shrink-0" />
-                <span>Hotline: 1900 8899 - Kỹ thuật: 0901 234 567</span>
+                <span>Hotline: {SHOP_CONFIG.hotline} - Kỹ thuật: {SHOP_CONFIG.technicalPhone}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-[#00E5FF] shrink-0" />
-                <span>Email: contact@techzone.vn</span>
+                <span>Email: {SHOP_CONFIG.email.contact}</span>
               </div>
             </div>
           </div>

@@ -24,6 +24,8 @@ import { ComparePage } from './pages/ComparePage.tsx';
 import { BlogPage } from './pages/BlogPage.tsx';
 import { ContactPage } from './pages/ContactPage.tsx';
 import { AdminDashboardPage } from './pages/AdminDashboardPage.tsx';
+import { ShipperDashboardPage } from './pages/ShipperDashboardPage.tsx';
+import { SellerDashboardPage } from './pages/SellerDashboardPage.tsx';
 
 function MainApp() {
   const [currentPage, setCurrentPage] = useState<string>('home');
@@ -71,6 +73,20 @@ function MainApp() {
         setCurrentPage('contact');
       } else if (path === 'admin') {
         setCurrentPage('admin');
+      } else if (path === 'shipper') {
+        setCurrentPage('shipper');
+      } else if (path === 'seller') {
+        setCurrentPage('seller');
+      } else if (path === 'order-success') {
+        setCurrentPage('order-success');
+        const savedOrder = localStorage.getItem('techzone_last_order');
+        if (savedOrder) {
+          try {
+            setPageParams({ order: JSON.parse(savedOrder) });
+          } catch (e) {
+            // ignore
+          }
+        }
       }
     };
 
@@ -96,7 +112,12 @@ function MainApp() {
       url = `/products/${params.id}`;
     } else if (page === 'cart') url = '/cart';
     else if (page === 'checkout') url = '/checkout';
-    else if (page === 'pc-builder') url = '/pc-builder';
+    else if (page === 'order-success') {
+      url = '/order-success';
+      if (params.order) {
+        localStorage.setItem('techzone_last_order', JSON.stringify(params.order));
+      }
+    } else if (page === 'pc-builder') url = '/pc-builder';
     else if (page === 'profile') {
       url = params.tab ? `/profile?tab=${params.tab}` : '/profile';
     } else if (page === 'compare') url = '/compare';
@@ -104,6 +125,8 @@ function MainApp() {
       url = params.slug ? `/blog/${params.slug}` : '/blog';
     } else if (page === 'contact') url = '/contact';
     else if (page === 'admin') url = '/admin';
+    else if (page === 'shipper') url = '/shipper';
+    else if (page === 'seller') url = '/seller';
 
     window.history.pushState(null, '', url);
   };
@@ -178,6 +201,14 @@ function MainApp() {
 
         {currentPage === 'admin' && (
           <AdminDashboardPage onNavigate={navigate} onOpenAuth={handleOpenAuth} />
+        )}
+
+        {currentPage === 'seller' && (
+          <AdminDashboardPage onNavigate={navigate} onOpenAuth={handleOpenAuth} />
+        )}
+
+        {currentPage === 'shipper' && (
+          <ShipperDashboardPage onNavigate={navigate} onOpenAuth={handleOpenAuth} />
         )}
       </main>
 

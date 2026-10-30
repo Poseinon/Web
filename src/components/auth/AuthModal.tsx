@@ -10,6 +10,7 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [selectedRole, setSelectedRole] = useState<'USER' | 'SHIPPER'>('USER');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -40,7 +41,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
         return;
       }
       setSubmitting(true);
-      const ok = await register(fullName, email, password, phone);
+      const ok = await register(fullName, email, password, phone, selectedRole);
       setSubmitting(false);
       if (ok) onClose();
     } else {
@@ -51,17 +52,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
     }
   };
 
-  const handleFillDemo = (type: 'admin' | 'user') => {
-    if (type === 'admin') {
-      setEmail('admin@techzone.vn');
-      setPassword('Admin@123');
-      setMode('login');
-    } else {
-      setEmail('user@techzone.vn');
-      setPassword('User@123');
-      setMode('login');
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -212,39 +202,66 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
             </div>
           )}
 
+          {mode === 'register' && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-gray-300">
+                  Chọn vai trò tài khoản đăng ký *
+                </label>
+                <span className="text-[10px] text-cyan-400 font-medium">2 vai trò đăng ký</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole('USER')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    selectedRole === 'USER'
+                      ? 'border-[#00E5FF] bg-[#00E5FF]/15 text-[#00E5FF] ring-2 ring-[#00E5FF]/40 shadow-sm'
+                      : 'border-[#1F2937] bg-[#0B0F14] text-gray-400 hover:text-white hover:border-gray-600'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base">👤</span>
+                    <span className="text-xs font-bold">Khách Hàng</span>
+                  </div>
+                  <div className="text-[10px] text-gray-400 font-normal leading-tight">
+                    Mua linh kiện, build PC & theo dõi đơn hàng
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole('SHIPPER')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    selectedRole === 'SHIPPER'
+                      ? 'border-emerald-400 bg-emerald-500/15 text-emerald-300 ring-2 ring-emerald-400/40 shadow-sm'
+                      : 'border-[#1F2937] bg-[#0B0F14] text-gray-400 hover:text-white hover:border-gray-600'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base">🚚</span>
+                    <span className="text-xs font-bold">Nhân Viên Shipper</span>
+                  </div>
+                  <div className="text-[10px] text-gray-400 font-normal leading-tight">
+                    Nhận đơn vận chuyển & cập nhật giao hàng
+                  </div>
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-500 mt-2 text-center">
+                🛡️ Tài khoản <strong className="text-gray-300">Quản trị viên (Admin)</strong> được phân quyền nội bộ trong Bảng điều khiển quản trị.
+              </p>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-2.5 mt-2 rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#7C3AED] hover:opacity-95 text-black font-extrabold text-xs shadow-lg shadow-[#00E5FF]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-2.5 mt-2 rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#7C3AED] hover:opacity-95 text-black font-extrabold text-xs shadow-lg shadow-[#00E5FF]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {submitting ? 'Đang xử lý...' : mode === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Tài Khoản'}
           </button>
         </form>
 
-        {/* Demo Fast Logins Section */}
-        <div className="mt-5 pt-4 border-t border-[#1F2937]">
-          <div className="text-[11px] font-semibold text-gray-400 text-center mb-2.5">
-            ⚡ Trải nghiệm nhanh với tài khoản mẫu:
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleFillDemo('admin')}
-              className="px-2.5 py-1.5 rounded-lg bg-[#1F2937] hover:bg-[#374151] border border-cyan-500/30 text-[11px] text-cyan-300 font-semibold text-left transition-colors"
-            >
-              👑 Admin Demo
-              <div className="text-[9px] text-gray-400 font-normal">admin@techzone.vn</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFillDemo('user')}
-              className="px-2.5 py-1.5 rounded-lg bg-[#1F2937] hover:bg-[#374151] border border-purple-500/30 text-[11px] text-purple-300 font-semibold text-left transition-colors"
-            >
-              👤 User Demo
-              <div className="text-[9px] text-gray-400 font-normal">user@techzone.vn</div>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -23,6 +23,7 @@ import {
 
 interface DatabaseSchema {
   users: User[];
+  deletedUserEmails?: string[];
   products: Product[];
   categories: Category[];
   brands: Brand[];
@@ -50,7 +51,27 @@ class DatabaseEngine {
       }
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        if (!parsed.deletedUserEmails) {
+          parsed.deletedUserEmails = [];
+        }
+        // Ensure new seed users are available if not previously deleted
+        for (const initUser of initialUsers) {
+          const emailLower = initUser.email.toLowerCase();
+          if (parsed.deletedUserEmails.includes(emailLower)) {
+            continue; // Keep explicitly deleted accounts deleted
+          }
+          const found = parsed.users.find((u: any) => u.email.toLowerCase() === emailLower);
+          if (!found) {
+            parsed.users.push(initUser);
+          } else {
+            // Keep role synced for default demo accounts
+            if (['admin@techzone.vn', 'seller@techzone.vn', 'shipper@techzone.vn', 'user@techzone.vn'].includes(emailLower)) {
+              found.role = initUser.role;
+            }
+          }
+        }
+        return parsed;
       }
     } catch (e) {
       console.error('Failed to load db.json, initializing fresh seed:', e);
@@ -108,6 +129,42 @@ class DatabaseEngine {
     this.data.users[idx] = { ...this.data.users[idx], ...updates, updatedAt: new Date().toISOString() };
     this.saveData();
     return this.data.users[idx];
+  }
+
+  deleteUser(id: string): boolean {
+    const target = this.data.users.find(u => u.id === id);
+    if (!target) return false;
+
+    if (!this.data.deletedUserEmails) {
+      this.data.deletedUserEmails = [];
+    }
+    if (target.email) {
+      const emailLower = target.email.toLowerCase();
+      if (!this.data.deletedUserEmails.includes(emailLower)) {
+        this.data.deletedUserEmails.push(emailLower);
+      }
+    }
+
+    this.data.users = this.data.users.filter(u => u.id !== id);
+
+    // Clean up cart and wishlist
+    delete this.data.carts[id];
+    delete this.data.wishlists[id];
+
+    // If this user was assigned as a shipper to orders, release the orders back to CONFIRMED
+    for (const o of this.data.orders) {
+      if (o.shipperId === id) {
+        delete o.shipperId;
+        delete o.shipperName;
+        delete o.shipperPhone;
+        if (o.status === 'SHIPPING') {
+          o.status = 'CONFIRMED';
+        }
+      }
+    }
+
+    this.saveData();
+    return true;
   }
 
   getAllUsers(): Omit<User, 'password'>[] {
@@ -405,6 +462,96 @@ class DatabaseEngine {
     return order;
   }
 
+  // ================= SHIPPER METHODS =================
+  getShipperActiveOrder(shipperId: string): Order | undefined {
+    return this.data.orders.find(o => o.shipperId === shipperId && o.status === 'SHIPPING');
+  }
+
+  assignShipper(orderId: string, shipperId: string, shipperName: string, shipperPhone: string): Order | undefined {
+    const order = this.data.orders.find(o => o.id === orderId || o.orderCode === orderId);
+    if (!order) return undefined;
+    order.shipperId = shipperId;
+    order.shipperName = shipperName;
+    order.shipperPhone = shipperPhone;
+    order.status = 'SHIPPING';
+    order.updatedAt = new Date().toISOString();
+    this.saveData();
+    return order;
+  }
+
+  unassignShipper(orderId: string): Order | undefined {
+    const order = this.data.orders.find(o => o.id === orderId || o.orderCode === orderId);
+    if (!order) return undefined;
+    delete order.shipperId;
+    delete order.shipperName;
+    delete order.shipperPhone;
+    order.status = 'CONFIRMED';
+    order.updatedAt = new Date().toISOString();
+    this.saveData();
+    return order;
+  }
+
+  updateShipperOrderStatus(orderId: string, status: OrderStatus, deliveryNotes?: string): Order | undefined {
+    const order = this.data.orders.find(o => o.id === orderId || o.orderCode === orderId);
+    if (!order) return undefined;
+    order.status = status;
+    if (deliveryNotes) {
+      order.deliveryNotes = deliveryNotes;
+    }
+    if (status === 'DELIVERED') {
+      order.paymentStatus = 'PAID';
+    }
+    order.updatedAt = new Date().toISOString();
+    this.saveData();
+    return order;
+  }
+
+  getShipperOrders(shipperId?: string): Order[] {
+    if (!shipperId) {
+      return this.data.orders.filter(o => o.status !== 'CANCELLED');
+    }
+    return this.data.orders.filter(o => o.shipperId === shipperId || (['CONFIRMED', 'PENDING'].includes(o.status) && !o.shipperId));
+  }
+
+  getShippersWithStats() {
+    const shippers = this.data.users.filter(u => u.role === 'SHIPPER');
+    return shippers.map(({ password, ...u }) => {
+      const activeOrder = this.data.orders.find(o => o.shipperId === u.id && o.status === 'SHIPPING');
+      const completedOrders = this.data.orders.filter(o => o.shipperId === u.id && o.status === 'DELIVERED');
+      const totalCodCollected = completedOrders
+        .filter(o => o.paymentMethod === 'COD')
+        .reduce((sum, o) => sum + o.total, 0);
+
+      return {
+        ...u,
+        activeOrder: activeOrder || null,
+        isAvailable: !activeOrder,
+        completedDeliveriesCount: completedOrders.length,
+        totalCodCollected
+      };
+    });
+  }
+
+  // ================= SELLER METHODS =================
+  getSellerDashboard() {
+    const totalProducts = this.data.products.length;
+    const totalOrders = this.data.orders.length;
+    const activeOrders = this.data.orders.filter(o => ['PENDING', 'CONFIRMED', 'SHIPPING'].includes(o.status)).length;
+    const completedOrders = this.data.orders.filter(o => o.status === 'DELIVERED').length;
+    const totalRevenue = this.data.orders
+      .filter(o => o.status === 'DELIVERED')
+      .reduce((sum, o) => sum + o.total, 0);
+
+    return {
+      totalProducts,
+      totalOrders,
+      activeOrders,
+      completedOrders,
+      totalRevenue,
+      lowStockProducts: this.data.products.filter(p => p.stock <= 5)
+    };
+  }
+
   // ================= REVIEWS =================
   getReviewsByProductId(productId: string): Review[] {
     return this.data.reviews.filter(r => r.productId === productId);
@@ -469,15 +616,42 @@ class DatabaseEngine {
     const totalProducts = this.data.products.length;
     const totalCustomers = this.data.users.filter(u => u.role === 'USER').length;
 
-    // Revenue timeline (last 7 days or months)
-    const revenueByMonth = [
-      { name: 'Tháng 1', revenue: 45000000, orders: 12 },
-      { name: 'Tháng 2', revenue: 58000000, orders: 18 },
-      { name: 'Tháng 3', revenue: 72000000, orders: 24 },
-      { name: 'Tháng 4', revenue: 89000000, orders: 30 },
-      { name: 'Tháng 5', revenue: 110000000, orders: 42 },
-      { name: 'Tháng 6', revenue: totalRevenue > 0 ? totalRevenue : 125000000, orders: totalOrders }
-    ];
+    // Calculate real monthly revenue based on actual orders
+    const now = new Date();
+    const monthsData: { name: string; revenue: number; orders: number; monthKey: string }[] = [];
+
+    // Generate last 6 months list (from 5 months ago to current month)
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthNum = d.getMonth() + 1;
+      const yearNum = d.getFullYear();
+      const monthKey = `${yearNum}-${String(monthNum).padStart(2, '0')}`;
+      monthsData.push({
+        name: `Tháng ${monthNum}`,
+        monthKey,
+        revenue: 0,
+        orders: 0
+      });
+    }
+
+    // Accumulate actual orders into their respective month
+    for (const order of this.data.orders) {
+      if (order.status !== 'CANCELLED') {
+        const orderDate = new Date(order.createdAt);
+        const orderMonthKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`;
+        const targetMonth = monthsData.find(m => m.monthKey === orderMonthKey);
+        if (targetMonth) {
+          targetMonth.revenue += order.total;
+          targetMonth.orders += 1;
+        }
+      }
+    }
+
+    const revenueByMonth = monthsData.map(({ name, revenue, orders }) => ({
+      name,
+      revenue,
+      orders
+    }));
 
     // Category distribution
     const categoryCount: Record<string, number> = {};

@@ -1,4 +1,4 @@
-export type Role = 'USER' | 'ADMIN';
+export type Role = 'USER' | 'SELLER' | 'SHIPPER' | 'ADMIN';
 
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
 
@@ -118,6 +118,10 @@ export interface Order {
   discountAmount: number;
   couponCode?: string;
   total: number;
+  shipperId?: string;
+  shipperName?: string;
+  shipperPhone?: string;
+  deliveryNotes?: string;
   createdAt: string;
   updatedAt: string;
 }

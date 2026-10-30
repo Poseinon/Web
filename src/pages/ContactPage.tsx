@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare, CheckCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext.tsx';
+import { SHOP_CONFIG } from '../config/shopConfig.ts';
 
 export const ContactPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -12,6 +13,8 @@ export const ContactPage: React.FC = () => {
 
   const { success, error } = useToast();
 
+  const primaryShowroom = SHOP_CONFIG.showrooms[0];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
@@ -20,7 +23,7 @@ export const ContactPage: React.FC = () => {
     }
 
     setSubmitted(true);
-    success('Tin nhắn của bạn đã được gửi đến ban hỗ trợ kỹ thuật TechZone!', 'Đã tiếp nhận');
+    success(`Tin nhắn của bạn đã được gửi đến ban hỗ trợ kỹ thuật ${SHOP_CONFIG.name}!`, 'Đã tiếp nhận');
     setName('');
     setEmail('');
     setPhone('');
@@ -31,7 +34,7 @@ export const ContactPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       {/* Title */}
       <div className="text-center max-w-xl mx-auto space-y-2">
-        <h1 className="text-3xl font-black text-white tracking-tight">LIÊN HỆ VỚI TECHZONE</h1>
+        <h1 className="text-3xl font-black text-white tracking-tight">LIÊN HỆ VỚI {SHOP_CONFIG.name}</h1>
         <p className="text-xs text-gray-400">
           Đội ngũ chuyên viên kỹ thuật phần cứng luôn sẵn sàng giải đáp thắc mắc và hỗ trợ bạn 24/7.
         </p>
@@ -41,29 +44,26 @@ export const ContactPage: React.FC = () => {
         {/* Left: Contact Info & Showrooms (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           <div className="p-6 rounded-2xl bg-[#111827] border border-[#1F2937] space-y-4">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Thông Tin Liên Hệ Trực Tiếp</h3>
-            <div className="space-y-3.5 text-xs text-gray-300">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-[#00E5FF] shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-bold text-white">Showroom Trụ Sở:</div>
-                  <div className="text-gray-400">123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh</div>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Hệ Thống Showroom & Cửa Hàng</h3>
+            <div className="space-y-4 text-xs text-gray-300">
+              {SHOP_CONFIG.showrooms.map((showroom, idx) => (
+                <div key={showroom.id} className="p-3 rounded-xl bg-[#0B0F14] border border-[#1F2937] space-y-1">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-[#00E5FF] shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-white">{showroom.name}</div>
+                      <div className="text-gray-400 mt-0.5">{showroom.address}</div>
+                      <div className="text-[#00E5FF] text-[11px] mt-1">Hotline: {showroom.phone}</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
 
-              <div className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-bold text-white">Điện thoại / Hotline:</div>
-                  <div className="text-gray-400">1900 8899 - Kỹ thuật: 0901 234 567</div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 pt-2 border-t border-[#1F2937]">
                 <Mail className="w-5 h-5 text-[#7C3AED] shrink-0 mt-0.5" />
                 <div>
                   <div className="font-bold text-white">Hộp thư điện tử:</div>
-                  <div className="text-gray-400">support@techzone.vn - sales@techzone.vn</div>
+                  <div className="text-gray-400">{SHOP_CONFIG.email.support} - {SHOP_CONFIG.email.sales}</div>
                 </div>
               </div>
 
@@ -71,7 +71,7 @@ export const ContactPage: React.FC = () => {
                 <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <div className="font-bold text-white">Thời gian làm việc:</div>
-                  <div className="text-gray-400">Thứ 2 - Chủ Nhật: 8:00 - 21:30 (Cả ngày lễ)</div>
+                  <div className="text-gray-400">{SHOP_CONFIG.workingHours}</div>
                 </div>
               </div>
             </div>
@@ -81,17 +81,17 @@ export const ContactPage: React.FC = () => {
           <div className="p-4 rounded-2xl bg-[#111827] border border-[#1F2937] space-y-3">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
               <MapPin className="w-4 h-4 text-[#00E5FF]" />
-              Bản Đồ Showroom TECHZONE
+              Bản Đồ Showroom {SHOP_CONFIG.name}
             </h4>
             <div className="relative aspect-video rounded-xl bg-[#0B0F14] border border-[#1F2937] overflow-hidden flex items-center justify-center p-4 text-center">
               <div className="space-y-2">
                 <div className="w-10 h-10 rounded-full bg-[#00E5FF]/20 text-[#00E5FF] flex items-center justify-center mx-auto">
                   <MapPin className="w-5 h-5 animate-bounce" />
                 </div>
-                <div className="text-xs font-bold text-white">TECHZONE FLAGSHIP STORE</div>
-                <div className="text-[11px] text-gray-400">123 Nguyễn Huệ, Quận 1, TP. HCM</div>
+                <div className="text-xs font-bold text-white">{primaryShowroom.name}</div>
+                <div className="text-[11px] text-gray-400">{primaryShowroom.address}</div>
                 <span className="inline-block px-2.5 py-1 rounded bg-[#1F2937] text-[10px] text-[#00E5FF] font-semibold">
-                  Tọa độ: 10.7769° N, 106.7009° E
+                  Tọa độ: {primaryShowroom.coordinates}
                 </span>
               </div>
             </div>

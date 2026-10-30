@@ -2,15 +2,33 @@ import React from 'react';
 import { CheckCircle, Package, ArrowRight, Home, QrCode, Copy, Check } from 'lucide-react';
 import { Order } from '../types/index.ts';
 import { useToast } from '../context/ToastContext.tsx';
+import { SHOP_CONFIG } from '../config/shopConfig.ts';
 
 interface OrderSuccessPageProps {
   order: Order | null;
   onNavigate: (page: string, params?: Record<string, any>) => void;
 }
 
-export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({ order, onNavigate }) => {
+export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({ order: propOrder, onNavigate }) => {
   const { success } = useToast();
   const [copied, setCopied] = React.useState(false);
+
+  // Restore order from localStorage if refreshed or lost
+  const [order] = React.useState<Order | null>(() => {
+    if (propOrder) {
+      try {
+        localStorage.setItem('techzone_last_order', JSON.stringify(propOrder));
+      } catch (e) {}
+      return propOrder;
+    }
+    const saved = localStorage.getItem('techzone_last_order');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return null;
+  });
 
   if (!order) {
     return (
@@ -35,6 +53,8 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({ order, onNav
     }
   };
 
+  const qrImageUrl = `https://img.vietqr.io/image/MB-090123456789-compact2.png?amount=${order.total}&addInfo=TECHZONE%20${order.orderCode}&accountName=VU%20VAN%20HAI`;
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 space-y-8">
       {/* Top Success Banner */}
@@ -54,55 +74,76 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({ order, onNav
       {/* QR Bank Transfer Section if chosen */}
       {order.paymentMethod === 'BANK_TRANSFER' && (
         <div className="p-6 rounded-2xl bg-[#111827] border border-purple-500/40 space-y-4 shadow-xl">
-          <div className="flex items-center gap-2 text-sm font-bold text-purple-400">
-            <QrCode className="w-5 h-5" />
-            <span>Thanh Toán Chuyển Khoản Ngân Hàng (VietQR 24/7)</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-bold text-purple-400">
+              <QrCode className="w-5 h-5" />
+              <span>Thanh Toán Chuyển Khoản Ngân Hàng (VietQR 24/7)</span>
+            </div>
+            <span className="text-[11px] bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full font-medium">
+              Tự động quét số tiền & nội dung
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
-            {/* VietQR Mock Card Visual */}
-            <div className="p-4 rounded-xl bg-white text-black flex flex-col items-center justify-center shadow-lg">
-              <div className="text-[10px] font-bold text-gray-600 mb-1">VIETQR CHUYỂN KHOẢN TỨC THÌ</div>
-              {/* Simulated QR Visual */}
-              <div className="w-44 h-44 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg p-2 flex flex-col items-center justify-center text-center">
-                <QrCode className="w-24 h-24 text-gray-800" />
-                <div className="text-[9px] font-mono font-bold mt-1 text-gray-700">TECHZONE-{order.orderCode}</div>
+            {/* Real Scanable VietQR Card Visual */}
+            <div className="p-4 rounded-xl bg-white text-black flex flex-col items-center justify-center shadow-lg border border-gray-200">
+              <div className="text-[11px] font-bold text-gray-700 mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Quét mã để thanh toán nhanh
               </div>
+              
+              <div className="relative group w-56 h-56 bg-white rounded-lg p-1.5 flex items-center justify-center shadow-inner border border-gray-100">
+                <img
+                  src={SHOP_CONFIG.banking.getQrUrl(order.total, order.orderCode)}
+                  alt={`VietQR ${order.orderCode}`}
+                  className="w-full h-full object-contain rounded"
+                  onError={(e) => {
+                    // Fallback to placeholder if offline
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+
               <div className="text-[11px] font-bold mt-2 text-center text-gray-800">
-                Số tiền: {order.total.toLocaleString('vi-VN')} ₫
+                Số tiền: <span className="text-purple-600">{order.total.toLocaleString('vi-VN')} ₫</span>
               </div>
+              <p className="text-[10px] text-gray-500 text-center mt-0.5">
+                Mở ứng dụng Ngân hàng hoặc Ví MoMo để quét
+              </p>
             </div>
 
             {/* Bank Transfer Details */}
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between py-1 border-b border-[#1F2937]">
                 <span className="text-gray-400">Ngân hàng:</span>
-                <span className="font-bold text-white">MB Bank (Quân Đội)</span>
+                <span className="font-bold text-white">{SHOP_CONFIG.banking.bankName}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-[#1F2937]">
                 <span className="text-gray-400">Số tài khoản:</span>
-                <span className="font-mono font-bold text-[#00E5FF]">090123456789</span>
+                <span className="font-mono font-bold text-[#00E5FF] text-sm">{SHOP_CONFIG.banking.accountNumber}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-[#1F2937]">
                 <span className="text-gray-400">Chủ tài khoản:</span>
-                <span className="font-bold text-white">CONG TY TNHH TECHZONE</span>
+                <span className="font-bold text-white uppercase">{SHOP_CONFIG.banking.accountHolder}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-[#1F2937]">
-                <span className="text-gray-400">Nội dung chuyển khoản:</span>
-                <span className="font-mono font-bold text-purple-400">{order.orderCode}</span>
+                <span className="text-gray-400">Nội dung chuyển tiền:</span>
+                <span className="font-mono font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">
+                  TECHZONE {order.orderCode}
+                </span>
               </div>
               <div className="flex justify-between py-1 border-b border-[#1F2937]">
-                <span className="text-gray-400">Số tiền:</span>
+                <span className="text-gray-400">Số tiền chính xác:</span>
                 <span className="font-bold text-xl text-[#00E5FF]">{order.total.toLocaleString('vi-VN')} ₫</span>
               </div>
 
               <button
                 type="button"
-                onClick={() => handleCopy(`${order.orderCode}`)}
-                className="w-full py-2 bg-[#1F2937] hover:bg-[#374151] text-xs font-semibold text-gray-200 rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+                onClick={() => handleCopy(`TECHZONE ${order.orderCode}`)}
+                className="w-full py-2 bg-[#1F2937] hover:bg-[#374151] text-xs font-semibold text-gray-200 rounded-xl flex items-center justify-center gap-1.5 transition-colors mt-2"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Đã sao chép cú pháp!' : 'Sao chép cú pháp chuyển tiền'}
+                {copied ? 'Đã sao chép nội dung!' : 'Sao chép nội dung chuyển khoản'}
               </button>
             </div>
           </div>
